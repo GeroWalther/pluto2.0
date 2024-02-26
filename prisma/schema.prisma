@@ -1,30 +1,86 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["driverAdapters"]
-}
-
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
-
-    // Do not use foreign keys (PlanetScale does not support them)
-    relationMode = "prisma"
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+generator client {
+  provider = "prisma-client-js"
+}
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+model Product {
+    id              Int       @id @default(autoincrement())
+    name            String
+    description     String
+    image           String
+    price           Int
+    category        Category
+    approvedForSale ApprovalStatus?
+    priceId         String?
+    stripeId        String?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    order           Order?    @relation(fields: [orderId], references: [id])
+    orderId         String?
+    createdBy       User      @relation("listedproducts" ,fields: [createdById], references: [id])
+    createdById     String
+    orderedBy       User      @relation("orderedProducts" ,fields: [orderedById], references: [id])
+    orderedById     String
 
     @@index([name])
     @@index([createdById])
+    @@index([orderId])
+    @@index([orderedById])
+}
+
+enum Category {
+  fonts
+  icons
+  sprites
+  ebooks
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  denied
+}
+
+model ProductFile {
+  id        String      @id @default(uuid())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+  order     Order?      @relation(fields: [orderId], references: [id])
+  orderId   String?
+  updatedAt DateTime    @updatedAt
+  createdAt DateTime    @default(now())
+  url       String?
+  filename  String?
+  mimeType  String?
+  filesize  Int?
+  width     Int?
+  height    Int?
+
+  // Index
+  @@index([userId])
+  @@index([orderId])
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  isPaid    Boolean
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+  products  Product[]
+  productfiles ProductFile[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Index
+  @@index([userId])
 }
 
 // Necessary for Next auth
@@ -65,7 +121,11 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    orders          Order[]
+    listedproducts  Product[]  @relation("listedproducts")
+    orderedProducts Product[]    @relation("orderedProducts")
+    listedproductfiles ProductFile[] 
+
 }
 
 model VerificationToken {
