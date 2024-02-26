@@ -27,7 +27,7 @@ model Product {
     orderId         String?
     createdBy       User      @relation("listedproducts" ,fields: [createdById], references: [id])
     createdById     String
-    orderedBy       User      @relation("orderedProducts" ,fields: [orderedById], references: [id])
+    orderedBy       User?     @relation("orderedProducts" ,fields: [orderedById], references: [id])
     orderedById     String
 
     @@index([name])
@@ -122,7 +122,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     orders          Order[]
-    listedproducts  Product[]  @relation("listedproducts")
+    listedproducts  Product[]    @relation("listedproducts")
     orderedProducts Product[]    @relation("orderedProducts")
     listedproductfiles ProductFile[] 
 
